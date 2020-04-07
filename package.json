@@ -1,0 +1,16 @@
+{
+  "name": "work-tracker",
+  "version": "1.0.0",
+  "description": "Tracks the completion of multiple promises in an async manner",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "pack": "npm pack"
+  },
+  "author": "Tristan Menzel",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}
