@@ -16,7 +16,7 @@ tracker.track(deferred.promise);
 
 console.log(tracker.complete); // false
 
-deferred.resolves(); // OR deferred.reject()
+deferred.resolve(); // OR deferred.reject()
 
 console.log(tracker.complete): // true
 
