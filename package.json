@@ -1,16 +1,24 @@
 {
   "name": "work-tracker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Tracks the completion of multiple promises in an async manner",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "pack": "npm pack"
   },
   "author": "Tristan Menzel",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^24.9.1",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.3.0",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "tslib": "^2.0.1"
   }
 }

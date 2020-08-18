@@ -1,54 +1,64 @@
-const noop = () => {
-};
-
-
-function deferred(delayInMs: number, action?: () => any): Promise<any> {
+function wait(delayInMs: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve((action || noop)());
+      resolve();
     }, delayInMs);
   });
 }
 
-export class WorkTracker {
-  private _activePromises: number = 0;
-  private _isComplete: boolean;
+export class EventEmitter<T> {
+  private readonly subs: Array<(e: T) => void> = [];
 
-  constructor(complete: boolean = true,
+  constructor(fn: (emit: (e: T) => void) => void) {
+    fn(e => this.emit(e));
+  }
+
+  private emit(e: T) {
+    this.subs.forEach(s => s(e));
+  }
+
+  subscribe(sub: (e: T) => void) {
+    this.subs.push(sub);
+    return {
+      unsubscribe: () => {
+        const i = this.subs.indexOf(sub);
+        if (i === -1) return;
+        this.subs.splice(i, 1);
+      }
+    };
+  }
+}
+
+export class WorkTracker {
+  private activePromises: number = 0;
+  private emitCompleteChanged: (e: boolean) => void;
+
+  constructor(private isComplete: boolean = true,
               public minDelayInMs: number = 0) {
-    this._isComplete = complete;
+  }
+
+  private setComplete(value: boolean) {
+    if (this.isComplete === value) return;
+    this.emitCompleteChanged(this.isComplete = value);
   }
 
   get complete(): boolean {
-    return this._isComplete;
+    return this.isComplete;
   }
 
-  track<T>(promise: Promise<T>): Promise<T> {
-    return this.trackInternal(promise, this.minDelayInMs);
-  }
+  completeChanged = new EventEmitter<boolean>(emit => this.emitCompleteChanged = emit);
 
-  private trackInternal<T>(promise: Promise<any>, minDelay?: number): Promise<T> {
-    const complete = (x: any) => {
-      this.updateIsComplete();
-      return promise;
-    };
-    const completeAndBubbleReject = (e: any) => {
-      this.updateIsComplete();
-      return Promise.reject(e);
-    };
-
-    this._isComplete = false;
-    this._activePromises++;
-    if (minDelay === 0) {
-      return promise.then(complete, completeAndBubbleReject);
-    } else {
-      return Promise.all([promise, deferred(minDelay)])
-        .then(complete, completeAndBubbleReject);
+  async track<T>(promise: Promise<T>): Promise<T> {
+    this.activePromises++;
+    this.setComplete(false);
+    try {
+      const minDelay = wait(this.minDelayInMs);
+      const res = await promise;
+      await minDelay;
+      return res;
+    } finally {
+      this.activePromises--;
+      this.setComplete(this.activePromises === 0);
     }
-  }
-
-  private updateIsComplete() {
-    this._activePromises = Math.max(0, this._activePromises - 1);
-    this._isComplete = this._activePromises === 0;
   }
 }
